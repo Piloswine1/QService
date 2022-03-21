@@ -8,9 +8,28 @@ try {
         throw new Error("WEATHER_API not set");
     if (!Deno.env.get("WEATHER_API_APPID"))
         throw new Error("WEATHER_API_APPID not set");
+    if (!Deno.env.get("WEATHER_GEOCODING_API"))
+        throw new Error("WEATHER_GEOCODING_API not set");
 } catch (error) {
     console.error(error);
     Deno.exit(-1);
+}
+
+export type GeocodingResponse = Array<{
+    name: string,
+    lat: number,
+    lon: number,
+}>
+
+const getLatLonByName = async (city: string) => {
+    const res = await fetch(
+        `${Deno.env.get('WEATHER_GEOCODING_API')}/direct?q=${city.toLowerCase()}&appid=${Deno.env.get('WEATHER_API_APPID')}`,
+        {method: 'GET'}
+    );
+    if (res.status !== 200)
+        throw new Error("failed");
+    const data = await res.json() as GeocodingResponse;
+    return data[0];
 }
 
 export type CurrentWeatherResponse = {
@@ -29,18 +48,14 @@ export class CurrentWeatherResource extends BaseResource {
         if (!city)
             return response.json({ message: "City not set" }, 500);
 
-        let res: Response | null = null;
-        try {
-            res = await fetch(
-                `${Deno.env.get('WEATHER_API')}/weather?q=${city.toLowerCase()}&appid=${Deno.env.get('WEATHER_API_APPID')}&units=metric`,
-                { method: 'GET' }
-            );
-            if (res.status !== 200)
-                throw new Error("failed");
-        } catch (error) {
-            console.error(error);
-            return response.json({ message: "Failed to get" }, 404);
-        }
+
+        const {lat, lon} = await getLatLonByName(city.toLowerCase());
+        const res = await fetch(
+            `${Deno.env.get('WEATHER_API')}/weather?lat=${lat}&lon=${lon}&appid=${Deno.env.get('WEATHER_API_APPID')}&units=metric`,
+            { method: 'GET' }
+        );
+        if (res.status !== 200)
+            throw new Error("failed");
         
         const body = await res.json() as CurrentWeatherResponse;
     
@@ -75,22 +90,17 @@ export class FutureWeatherResource extends BaseResource {
         if (toFind.isAfter(now.add(7, 'day')) || toFind.isBefore(now))
             return response.json({ message: "Can't forecast more than 7 days ahead or days before today" }, 500);
 
-        let res: Response | null = null;
-        try {
-            res = await fetch(
-                `${Deno.env.get('WEATHER_API')}/onecall?q=${city.toLowerCase()}&appid=${Deno.env.get('WEATHER_API_APPID')}&units=metric&exclude=current`,
-                { method: 'GET' }
-            );
-            if (res.status !== 200)
-                throw new Error("failed");
-        } catch (error) {
-            console.error(error);
-            return response.json({ message: "Failed to get" }, 404);
-        }
+        const {lat, lon} = await getLatLonByName(city.toLowerCase());
+        const res = await fetch(
+            `${Deno.env.get('WEATHER_API')}/onecall?lat=${lat}&lon=${lon}&appid=${Deno.env.get('WEATHER_API_APPID')}&units=metric&exclude=current`,
+            { method: 'GET' }
+        );
+        if (res.status !== 200)
+            throw new Error("failed");
 
         const body = await res.json() as ForecastWeatherResponse;
 
-        const found = body.daily.find(({dt}) => dayjs(dt).isSame(toFind, 'day'));
+        const found = body.daily.find(day => dayjs(day.dt * 1000).isSame(toFind, 'day'));
         if (!found)
             return response.json({ message: "Failed to found day" }, 404);
 
