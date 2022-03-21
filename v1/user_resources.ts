@@ -22,10 +22,10 @@ export type GeocodingResponse = Array<{
 }>
 
 const getLatLonByName = async (city: string) => {
-    const res = await fetch(
-        `${Deno.env.get('WEATHER_GEOCODING_API')}/direct?q=${city.toLowerCase()}&appid=${Deno.env.get('WEATHER_API_APPID')}`,
-        {method: 'GET'}
-    );
+    const url = new URL(`${Deno.env.get('WEATHER_GEOCODING_API')}/direct`);
+    url.searchParams.set('q', city.toLowerCase());
+    url.searchParams.set('appid', Deno.env.get('WEATHER_API_APPID') ?? '');
+    const res = await fetch(url, {method: 'GET'});
     if (res.status !== 200)
         throw new Error("failed");
     const data = await res.json() as GeocodingResponse;
@@ -50,10 +50,12 @@ export class CurrentWeatherResource extends BaseResource {
 
 
         const {lat, lon} = await getLatLonByName(city.toLowerCase());
-        const res = await fetch(
-            `${Deno.env.get('WEATHER_API')}/weather?lat=${lat}&lon=${lon}&appid=${Deno.env.get('WEATHER_API_APPID')}&units=metric`,
-            { method: 'GET' }
-        );
+        const url = new URL(`${Deno.env.get('WEATHER_API')}/weather`);
+        url.searchParams.set('lat', lat.toString());
+        url.searchParams.set('lon', lon.toString());
+        url.searchParams.set('appid', Deno.env.get('WEATHER_API_APPID') ?? '');
+        url.searchParams.set('units', 'metric');
+        const res = await fetch(url, { method: 'GET' });
         if (res.status !== 200)
             throw new Error("failed");
         
@@ -91,10 +93,12 @@ export class FutureWeatherResource extends BaseResource {
             return response.json({ message: "Can't forecast more than 7 days ahead or days before today" }, 500);
 
         const {lat, lon} = await getLatLonByName(city.toLowerCase());
-        const res = await fetch(
-            `${Deno.env.get('WEATHER_API')}/onecall?lat=${lat}&lon=${lon}&appid=${Deno.env.get('WEATHER_API_APPID')}&units=metric&exclude=current`,
-            { method: 'GET' }
-        );
+        const url = new URL(`${Deno.env.get('WEATHER_API')}/onecall`);
+        url.searchParams.set('lat', lat.toString());
+        url.searchParams.set('lon', lon.toString());
+        url.searchParams.set('appid', Deno.env.get('WEATHER_API_APPID') ?? '');
+        url.searchParams.set('units', 'metric');
+        const res = await fetch(url, { method: 'GET' });
         if (res.status !== 200)
             throw new Error("failed");
 
