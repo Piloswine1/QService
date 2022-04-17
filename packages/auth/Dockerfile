@@ -1,5 +1,8 @@
 FROM rust:buster as builder
 WORKDIR /usr/src/auth
+
+RUN apt update && apt -y install cmake
+
 COPY . .
 RUN cargo install --path .
 

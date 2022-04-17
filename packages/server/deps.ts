@@ -6,4 +6,4 @@ export * as Drash from "https://deno.land/x/drash@v2.5.4/mod.ts";
 import dayjs from "https://cdn.skypack.dev/dayjs?dts";
 export {dayjs};
 
-export * as grpc from "https://deno.land/x/grpc_basic@0.4.3/client.ts";
+export * as grpc from "https://deno.land/x/grpc_basic@0.4.4/client.ts";
