@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+option csharp_namespace = "Auth";
+
+package Auth;
+
+message RequestAuth {
+    string name = 1;
+}
+
+message ResponseAuth {
+    bool authenticated = 1;
+}
+
+service AuthService {
+    rpc Auth (RequestAuth) returns (ResponseAuth);
+}
