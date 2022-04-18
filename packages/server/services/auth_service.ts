@@ -6,7 +6,7 @@ export class AuthService extends Drash.Service {
         request: Drash.Request,
         response: Drash.Response,
     ): Promise<void> {
-        const protoPath = new URL("../../../proto/auth.proto", import.meta.url);
+        const protoPath = new URL("../proto/auth.proto", import.meta.url);
         const protoFile = await Deno.readTextFile(protoPath);
 
         const client = grpc.getClient<AuthServiceType>({

@@ -1,12 +1,12 @@
-FROM rust:buster as builder
+FROM rust:alpine as builder
 WORKDIR /usr/src/auth
 
-RUN apt update && apt -y install cmake
+RUN apk add --no-cache cmake
 
 COPY . .
 RUN cargo install --path .
 
-FROM debian:buster-slim
+FROM alpine:latest
 COPY --from=builder /usr/local/cargo/bin/auth /usr/local/bin/auth
 EXPOSE 50051
 CMD ["auth"]

@@ -1,0 +1,17 @@
+version: "3.9"
+services:
+  weather:
+    build: ./packages/server/
+    deploy:
+      replicas: 2
+  auth:
+    build: ./packages/auth/
+  nginx:
+    image: nginx:alpine
+    volumes:
+      - ./configs/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "80:80"
+    depends_on:
+      - auth
+      - weather

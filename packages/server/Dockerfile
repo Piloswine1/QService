@@ -1,14 +1,15 @@
-FROM denoland/deno:1.20.6
+FROM denoland/deno:alpine as builder
 
-WORKDIR /app
-
-USER deno
+WORKDIR /myapp
 
 COPY deps.ts .
-RUN deno cache deps.ts
 
-ADD . .
-RUN deno cache app.ts
+COPY . .
+RUN deno compile --allow-all app.ts
+
+FROM alpine as runner
+
+COPY --from=builder /myapp/app .
 
 EXPOSE 8888
-CMD ["run", "--allow-all", "app.ts"]
+CMD ["app"]
