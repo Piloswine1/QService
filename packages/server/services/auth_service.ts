@@ -6,26 +6,32 @@ export class AuthService extends Drash.Service {
         request: Drash.Request,
         response: Drash.Response,
     ): Promise<void> {
-        const protoPath = new URL("../proto/auth.proto", import.meta.url);
-        const protoFile = await Deno.readTextFile(protoPath);
+        try {
+            const protoPath = new URL("../proto/auth.proto", import.meta.url);
+            const protoFile = await Deno.readTextFile(protoPath);
 
-        const client = grpc.getClient<AuthServiceType>({
-            hostname: Deno.env.get("GRPC_HOSTNNAME") ?? "localhost",
-            port: Number(Deno.env.get("GRPC_PORT") ?? 50051),
-            root: protoFile,
-            serviceName: "AuthService",
-        });
+            const client = grpc.getClient<AuthServiceType>({
+                hostname: Deno.env.get("GRPC_HOSTNNAME") ?? "localhost",
+                port: Number(Deno.env.get("GRPC_PORT") ?? 50051),
+                root: protoFile,
+                serviceName: "AuthService",
+            });
 
-        const name = request.headers.get('Own-Auth-UserName');
-        if (!name)
-            throw new Drash.Errors.HttpError(403, "Failed to authorize");
+            const name = request.headers.get('Own-Auth-UserName');
+            if (!name)
+                throw new Drash.Errors.HttpError(403, "Failed to authorize");
 
-        const { authenticated } = await client.Auth({ name });
+            const { authenticated } = await client.Auth({ name });
 
-        if (!authenticated)
-            throw new Drash.Errors.HttpError(403, "Wrong username");
+            if (!authenticated)
+                throw new Drash.Errors.HttpError(403, "Wrong username");
 
-        client.close();
-        response.json({ message: 'Success' });
+            client.close();
+            response.json({ message: 'Success' });
+        } catch (error) {
+            console.log(error);
+            if (error instanceof Drash.Errors.HttpError)
+                throw error;
+        }
     }
 }

@@ -1,9 +1,12 @@
 version: "3.9"
 services:
-  weather:
+  weather_1:
     build: ./packages/server/
-    deploy:
-      replicas: 2
+    image: weather
+  weather_2:
+    image: weather
+    depends_on:
+      - weather_1
   auth:
     build: ./packages/auth/
   nginx:
@@ -14,4 +17,5 @@ services:
       - "80:80"
     depends_on:
       - auth
-      - weather
+      - weather_1
+      - weather_2

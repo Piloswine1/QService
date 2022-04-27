@@ -1,7 +1,7 @@
 FROM rust:alpine as builder
 WORKDIR /usr/src/auth
 
-RUN apk add --no-cache cmake
+RUN apk add --no-cache cmake musl-dev
 
 COPY . .
 RUN cargo install --path .

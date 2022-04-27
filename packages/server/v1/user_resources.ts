@@ -106,7 +106,6 @@ export class FutureWeatherResource extends BaseResource {
             units: 'metric'
         })
         const res = await fetch(`${Deno.env.get('WEATHER_API')}/onecall?${params.toString()}`, {
-            body: params,
             method: 'GET'
         });
         if (res.status !== 200)
