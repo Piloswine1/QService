@@ -2,23 +2,21 @@ import { Drash, Redis } from "../deps.ts";
 import { BaseResource } from "../resources/base_resource.ts";
 
 export class RedisWeatherResource extends BaseResource {
+    client!: Redis.Redis;
+
     public paths = this.prefixPaths("api_v3", ["/current"]);
-    client: Redis.Redis | null = null;
 
     constructor() {
         super();
         Redis
             .connect({
                 hostname: Deno.env.get("REDIS_HOSTNAME") ?? "0.0.0.0",
-                port: Deno.env.get("REDIS_HOSTNAME") ?? "6380",
+                port: Deno.env.get("REDIS_PORT") ?? "6380",
             })
             .then(newClient => this.client = newClient);
     }
 
     public async GET(request: Drash.Request, response: Drash.Response) {
-        if (!this.client)
-            throw new Drash.Errors.HttpError(501, "redis client not set");
-
         const {city} = await request.json();
 
         if (!city)
@@ -40,10 +38,7 @@ export class RedisWeatherResource extends BaseResource {
         });
     }
 
-    public async PUT(request: Drash.Request, response: Drash.Response) {
-        if (!this.client)
-            throw new Drash.Errors.HttpError(501, "redis client not set");
-        
+    public async PUT(request: Drash.Request, response: Drash.Response) {        
         const {city, unit = 'celsius', temperature} = await request.json();
 
         if (!city)
