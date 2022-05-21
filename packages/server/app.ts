@@ -16,7 +16,7 @@ const parsed = parse(Deno.args, {
 
 const resources: Array<typeof BaseResource> = [];
 
-if (!parsed[Args.noV1])
+if (!parsed[Args.noV1] && !Deno.env.get(Args.noV1))
     resources.push(
         ...[
             CurrentWeatherResource,
@@ -24,7 +24,7 @@ if (!parsed[Args.noV1])
         ]
     );
 
-if (!parsed[Args.noV2])
+if (!parsed[Args.noV2] && !Deno.env.get(Args.noV2))
     resources.push(
         ...[
             CurrentWeatherResourceWithAuth,
@@ -32,7 +32,7 @@ if (!parsed[Args.noV2])
         ]
     );
 
-if (!parsed[Args.noV3])
+if (!parsed[Args.noV3] && !Deno.env.get(Args.noV3))
     resources.push(RedisWeatherResource);
 
 export const server = new Drash.Server({
