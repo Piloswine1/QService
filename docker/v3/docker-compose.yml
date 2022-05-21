@@ -1,0 +1,54 @@
+version: "3.9"
+services:
+  weather:
+    build: ../packages/server/
+    image: weather
+    environment:
+      noV1: 1,
+      noV2: 1,
+    networks:
+      - server
+    depends_on:
+      - twemproxy
+  twemproxy:
+    image: twemproxy-image
+    build: ./twemproxy
+    networks:
+      - server
+      - proxy
+    depends_on:
+      - auth
+      - redis_1
+      - redis_2
+  redis_1:
+    image: redis:alpine
+    networks:
+      - redis_1
+      - proxy
+  redis_1_rep:
+    image: redis:alpine
+    volumes:
+      - ../../configs:./usr/local/etc/redis:ro
+    networks:
+      - redis_1
+  redis_2:
+    image: redis:alpine
+    networks:
+      - redis_2
+      - proxy
+  redis_2_rep:
+    image: redis:alpine
+    volumes:
+      - ../../configs:./usr/local/etc/redis:ro
+    networks:
+      - redis_2
+networks:
+  redis_1:
+    driver: redis-driver-1
+  redis_2:
+    driver: redis-driver-2
+  proxy:
+    driver: proxy-1
+  server:
+    driver: server-1
+
