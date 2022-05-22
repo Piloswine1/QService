@@ -8,28 +8,25 @@ export class RedisWeatherResource extends BaseResource {
 
     constructor() {
         super();
+        console.log("Connecting redis...")
         Redis
-            .connect({
-                hostname: Deno.env.get("REDIS_HOSTNAME") ?? "0.0.0.0",
-                port: Deno.env.get("REDIS_PORT") ?? "6380",
-            })
-            .then(newClient => this.client = newClient);
+            .connect({ hostname: "twemproxy", port: 6379 })
+            .then(newClient => this.client = newClient)
+            .catch(err => console.log(err));
     }
 
     public async GET(request: Drash.Request, response: Drash.Response) {
-        const {city} = await request.json();
+        const city = request.queryParam("city");
 
         if (!city)
             throw new Drash.Errors.HttpError(301, "city not stated");
         
-        const existsUnit = await this.client.hexists(city, 'unit');
-        const existsTemperature = await this.client.hexists(city, 'temperature');
+        const data = (await this.client.get(city))?.toString();
 
-        if (!existsUnit || !existsTemperature)
+        if (!data)
             throw new Drash.Errors.HttpError(404, "city not found");
 
-        const unit = await this.client.hget(city, 'unit');
-        const temperature = await this.client.hget(city, 'temperature');
+        const { unit, temperature } = JSON.parse(data);
 
         return response.json({
             city,
@@ -39,7 +36,9 @@ export class RedisWeatherResource extends BaseResource {
     }
 
     public async PUT(request: Drash.Request, response: Drash.Response) {        
-        const {city, unit = 'celsius', temperature} = await request.json();
+        const city = request.bodyParam<string>("city");
+        const unit = request.bodyParam<string>("unit") ?? 'celsius';
+        const temperature = request.bodyParam<number>("temperature");
 
         if (!city)
             throw new Drash.Errors.HttpError(301, "city not stated");
@@ -47,7 +46,7 @@ export class RedisWeatherResource extends BaseResource {
         if (!temperature)
             throw new Drash.Errors.HttpError(301, "temperature not stated");
 
-        await this.client.hset(city, {unit, temperature});
+        await this.client.set(city, JSON.stringify({unit, temperature}));
 
         return response.json({message: 'weather set'});
     }
